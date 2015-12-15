@@ -20,20 +20,26 @@ import edu.wpi.first.wpilibj.RobotDrive;
  */
 
 public class Robot extends IterativeRobot {
-	final int REAR_RIGHT_CHANNEL = 1;
-	final int FRONT_RIGHT_CHANNEL = 2;
-	final int REAR_LEFT_CHANNEL = 3;
-	final int FRONT_LEFT_CHANNEL = 4;
+	final int REAR_RIGHT_CHANNEL = 4;
+	final int FRONT_RIGHT_CHANNEL = 3;
+	final int REAR_LEFT_CHANNEL = 1;
+	final int FRONT_LEFT_CHANNEL = 2;
 	final int GRABBER_MOTOR_CHANNEL = 5;
 	
 	final int JOYSTICK_CHANNEL = 0;
 	final int MOVE_AXIS = 1;
-	final int ROTATE_AXIS = 2;
+	final int ROTATE_AXIS = 0;
 	final int GRAB_UP_BUTTON = 1;
 	final int GRAB_DOWN_BUTTON = 4;
+	final int HALF_SPEED_BUTTON = 6;
 	final double GRAB_UP_MAGNITUDE = 1.0;
 	final double GRAB_DOWN_MAGNITUDE = -1.0;
+	final double HALF_SPEED = 0.5;
 	
+	CANTalon rearRight;
+	CANTalon frontRight;
+	CANTalon rearLeft;
+	CANTalon frontLeft;
 	CANTalon grabberMotor;
 	
 	//Grabber doesn't need a wrapper because it only does a single thing.
@@ -49,9 +55,19 @@ public class Robot extends IterativeRobot {
      */
     public void robotInit() {
     	grabberMotor = new CANTalon(GRABBER_MOTOR_CHANNEL);
+    	
+    	//This would normally be wrapped in a class, but because its just one BaseActuator we can keep it to one variable.
     	grabberMethod = new ActuatorSimple(grabberMotor);
     	
-    	driveTrain = new RobotDrive(FRONT_LEFT_CHANNEL, REAR_LEFT_CHANNEL, FRONT_RIGHT_CHANNEL, REAR_RIGHT_CHANNEL);
+    	rearRight = new CANTalon(REAR_RIGHT_CHANNEL);
+        frontRight = new CANTalon(FRONT_RIGHT_CHANNEL);
+    	
+        rearLeft = new CANTalon(REAR_LEFT_CHANNEL);
+        frontLeft = new CANTalon(FRONT_LEFT_CHANNEL);
+    	
+    	driveTrain = new RobotDrive(frontLeft, rearLeft, frontRight, rearRight);
+    	
+    	//Same explanation as grabberMethod
     	driveMethod = new DriveArcade(driveTrain);
     	
     	joystick = new Joystick(JOYSTICK_CHANNEL);
@@ -66,11 +82,18 @@ public class Robot extends IterativeRobot {
      * This function is called periodically during operator control
      */
     public void teleopPeriodic() {
-        double X = joystick.getRawAxis(ROTATE_AXIS);
-        double Y = joystick.getRawAxis(MOVE_AXIS);
+     
+    		
+        double X = -joystick.getRawAxis(ROTATE_AXIS);
+        double Y = -joystick.getRawAxis(MOVE_AXIS);
         boolean grabUp = joystick.getRawButton(GRAB_UP_BUTTON);
         boolean grabDown = joystick.getRawButton(GRAB_DOWN_BUTTON);
-        
+        boolean halfSpeed = joystick.getRawButton(HALF_SPEED_BUTTON);
+    	if(halfSpeed)
+    	{
+    		X *= HALF_SPEED;
+    		Y *= HALF_SPEED;
+    	}
         driveMethod.drive(X, Y);
         
         if(grabUp){
